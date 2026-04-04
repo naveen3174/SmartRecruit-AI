@@ -1,0 +1,45 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const path = require('path');
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middleware
+app.use(cors());
+app.use(express.json({ limit: '100mb' }));
+app.use(express.urlencoded({ limit: '100mb', extended: true }));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
+// Request logger for debugging
+app.use((req, res, next) => {
+  console.log(`[${new Date().toLocaleTimeString()}] ${req.method} ${req.url}`);
+  next();
+});
+
+// MongoDB Connection (Re-enabling for final implementation)
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/smartrecruit')
+  .then(() => console.log('MongoDB connected'))
+  .catch(err => console.error('MongoDB connection error:', err));
+
+// Routes
+app.get('/', (req, res) => {
+  res.send('SmartRecruit AI API is running...');
+});
+
+// Import and use routes
+const authRoutes = require('./routes/authRoutes');
+const interviewRoutes = require('./routes/interviewRoutes');
+const publicRoutes = require('./routes/publicRoutes');
+
+app.use('/api/auth', authRoutes);
+app.use('/api/interviews', interviewRoutes);
+app.use('/api/public', publicRoutes);
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
