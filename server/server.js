@@ -10,17 +10,25 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // CORS Configuration - Allow Vercel frontend + localhost in dev
+// CLIENT_URL can be a single URL or comma-separated list of URLs
 const allowedOrigins = [
-  process.env.CLIENT_URL,
+  ...(process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',').map(u => u.trim()) : []),
   'http://localhost:5173',
   'http://localhost:3000',
 ].filter(Boolean);
+
+// Also allow all Vercel preview deployment subdomains
+const vercelPreviewRegex = /^https:\/\/.*\.vercel\.app$/;
 
 app.use(cors({
   origin: (origin, callback) => {
     // Allow requests with no origin (like mobile apps, curl, Postman)
     if (!origin) return callback(null, true);
     if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    // Allow all *.vercel.app subdomains (covers preview deployments)
+    if (vercelPreviewRegex.test(origin)) {
       return callback(null, true);
     }
     callback(new Error(`CORS policy: Origin ${origin} not allowed`));
