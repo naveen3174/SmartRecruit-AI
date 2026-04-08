@@ -1,21 +1,20 @@
 const axios = require('axios');
-const fs = require('fs');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
 /**
  * Transcribe Audio using OpenRouter (Gemini 2.0 Flash)
+ * @param {Buffer} fileBuffer - The video/audio file as an in-memory Buffer
+ * @param {string} mimetype
  */
-const transcribeAudio = async (filePath, mimetype = "video/webm", retryCount = 0) => {
+const transcribeAudio = async (fileBuffer, mimetype = "video/webm", retryCount = 0) => {
   try {
-    const fileStats = fs.statSync(filePath);
-    const fileSizeInMB = fileStats.size / (1024 * 1024);
+    const fileSizeInMB = fileBuffer.length / (1024 * 1024);
     
     console.log(`[OpenRouter] Transcription Request: ${fileSizeInMB.toFixed(2)} MB`);
 
-    const fileData = fs.readFileSync(filePath);
-    const base64Data = fileData.toString("base64");
+    const base64Data = fileBuffer.toString("base64");
 
     // Safety limit for OpenRouter base64
     if (base64Data.length > 28 * 1024 * 1024) {

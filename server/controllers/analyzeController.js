@@ -22,7 +22,6 @@ const startAnalysis = async (req, res) => {
       userId: req.user.userId,
       jobDescription,
       questions: parsedQuestions.map(q => ({ questionText: q })),
-      videoUrl: file.path,
       status: 'processing'
     });
     await interview.save();
@@ -31,8 +30,9 @@ const startAnalysis = async (req, res) => {
     const user = await User.findById(req.user.userId);
     const resumeText = user?.resumeText || "";
 
-    // Trigger background analysis
-    processAnalysis(interview._id, file.path, jobDescription, file.mimetype, resumeText, parsedQuestions);
+    // Trigger background analysis — pass the in-memory buffer, not a file path
+    // (Render has an ephemeral filesystem; files saved to disk disappear on restart)
+    processAnalysis(interview._id, file.buffer, jobDescription, file.mimetype, resumeText, parsedQuestions);
 
     res.json({ 
       message: 'Analysis started', 
@@ -44,7 +44,7 @@ const startAnalysis = async (req, res) => {
   }
 };
 
-const processAnalysis = async (interviewId, filePath, jobDescription, mimetype, resumeText = "", questionsAsked = []) => {
+const processAnalysis = async (interviewId, fileBuffer, jobDescription, mimetype, resumeText = "", questionsAsked = []) => {
   try {
     // 1. Transcribe (Must have API key and working quota)
     let transcript = "";
@@ -54,7 +54,7 @@ const processAnalysis = async (interviewId, filePath, jobDescription, mimetype, 
     if (apiKey) {
       console.log('--- STARTING TRANSCRIPTION ---');
       try {
-        transcript = await transcribeAudio(filePath, mimetype);
+        transcript = await transcribeAudio(fileBuffer, mimetype);
         console.log('--- TRANSCRIPTION COMPLETE ---');
       } catch (err) {
         console.error('Transcription failed:', err.message);

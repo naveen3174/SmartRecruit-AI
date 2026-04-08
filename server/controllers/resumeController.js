@@ -1,14 +1,12 @@
 const User = require('../models/User');
 const axios = require('axios');
-const fs = require('fs');
 
 const uploadResume = async (req, res) => {
   try {
     const file = req.file;
     if (!file) return res.status(400).json({ error: 'No file uploaded' });
 
-    const fileData = fs.readFileSync(file.path);
-    const base64Data = fileData.toString("base64");
+    const base64Data = file.buffer.toString("base64");
     const mimeType = file.mimetype.includes('pdf') ? "application/pdf" : "image/jpeg";
 
     console.log(`[OpenRouter] Parsing resume: ${file.originalname} (${mimeType})`);
