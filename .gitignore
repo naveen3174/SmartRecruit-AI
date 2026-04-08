@@ -8,7 +8,8 @@ yarn-error.log
 .env.local
 .env.development
 .env.test
-.env.production
+# Note: client/.env.production is intentionally NOT ignored (contains only public VITE_ vars)
+server/.env.production
 
 # Build files
 dist/
